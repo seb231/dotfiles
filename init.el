@@ -57,6 +57,9 @@
         "/home/mje/.emacs.d/yasnippet/snippets"         ;; the default collection
         ))
 (yas-global-mode 1)
+;; setup for tab completion in term
+(add-hook 'term-mode-hook (lambda()
+        (setq yas-dont-activate t)))
 
 ; Elpy setup
 (elpy-enable)			   
@@ -129,7 +132,7 @@
 
 ;; load theme
 ;; (load-theme 'smyx t)
-(load-theme 'tangotango t)
+(load-theme 'twilight t)
 
 ;; Markdown mode
 (autoload 'markdown-mode "markdown-mode"
@@ -151,6 +154,29 @@
 
 ;; Changes all yes/no questions to y/n type
 (fset 'yes-or-no-p 'y-or-n-p)
+
+;; setup neotree
+(require 'neotree)
+(global-set-key [f8] 'neotree-toggle)
+(add-hook 'neotree-mode-hook
+	(lambda ()
+	    (define-key evil-normal-state-local-map (kbd "TAB") 'neotree-enter)
+	    (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-enter)
+	    (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
+	    (define-key evil-normal-state-local-map (kbd "RET") 'neotree-enter)))
+
+;; projectile
+(require 'projectile)
+(projectile-global-mode)
+(setq projectile-enable-caching t)
+
+;; whitespace-mode
+(require 'whitespace)
+(setq whitespace-line-column 79) ;; limit line length
+(setq whitespace-style '(face lines-tail))
+
+(add-hook 'prog-mode-hook 'whitespace-mode)
+(add-hook 'python-mode-hook 'whitespace-mode)
 
 ; use pandocs as markdown tool
 (custom-set-variables
