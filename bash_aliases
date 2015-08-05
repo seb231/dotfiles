@@ -21,6 +21,7 @@ alias gc='git commit'
 alias gd='git diff'
 alias go='git checkout '
 alias gk='gitk --all&'
+alias gsw='git show ' 
 
 
 ## Python aliases
