@@ -26,8 +26,8 @@ alias gsw='git show '
 
 ## Python aliases
 alias ipl='ipython --pylab=QT'
-alias ipqt='ipython qtconsole --colors=Linux --pylab=QT'
-alias ipex='ipython qtconsole --colors=Linux --pylab=QT --existing'
+alias ipqt='ipython qtconsole --style=fruity --pylab=QT'
+alias ipex='ipython qtconsole --style=fruity --pylab=QT --existing'
 
 
 ## Freesurfer
