@@ -51,15 +51,14 @@ function fvPial () { if [ $# -eq 0 ]
 	    "$SUBJECTS_DIR/$@"/surf/lh.pial:edgecolor='blue' \
 	    "$SUBJECTS_DIR/$@"/surf/rh.pial:edgecolor='blue'
 fi; }
-
 function fvBemCheck () { if [ $# -eq 0 ]
     then
 	echo "No subject supplied"
     else
 	command freeview -v "$SUBJECTS_DIR/$@"/mri/T1.mgz \
-	    -f "$SUBJECTS_DIR/$@"/bem/"$@"_brain.surf:edgecolor='red' \
-	    "$SUBJECTS_DIR/$@"/bem/"$@"_inner_skull.surf:edgecolor='blue' \
-	    "$SUBJECTS_DIR/$@"/bem/"$@"_outer_skull.surf:edgecolor='green'
+	    -f "$SUBJECTS_DIR/$@"/bem/outer_skin.surf:edgecolor='yellow' \
+	    "$SUBJECTS_DIR/$@"/bem/inner_skull.surf:edgecolor='red' \
+	    "$SUBJECTS_DIR/$@"/bem/outer_skull.surf:edgecolor='blue'
 fi ;}
 
 function fvRcCheck() { if [ $# -eq 0 ]
