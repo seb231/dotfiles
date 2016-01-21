@@ -1,80 +1,71 @@
-;;; package --- Summary
-;;; I have some pacakges
+;; init.el --- Emacs configuration
 
-;;; Commentary:
+;; INSTALL PACKAGES
+;; --------------------------------------
 
-;;; Code:
-
-;; (require 'package)
-;; (add-to-list 'package-archives
-;;   '("melpa" . "http://melpa.milkbox.net/packages/") t)
 (require 'package)
+
 (add-to-list 'package-archives
-             '("melpa" . "http://melpa.org/packages/") t)
+            '("melpa" . "http://melpa.org/packages/") t)
+(add-to-list 'package-archives
+ 	      '("melpa-stable" . "http://stable.melpa.org/packages/") t)
+
 (package-initialize)
 
-;; graphical setups
-(tool-bar-mode -1)
-(scroll-bar-mode -1)
-(global-nlinum-mode 1)
-(global-visual-line-mode t)
-(menu-bar-mode -1)
+(when (not package-archive-contents)
+  (package-refresh-contents))
 
-(setq tab-width 4)
-(setq indent-tabs-mode nil)
+(defvar myPackages
+  '(better-defaults
+    ein
+    elpy
+    flycheck
+    evil
+    monokai-theme
+    yasnippet
+    evil-nerd-commenter 
+    projectile
+    window-numbering
+    atom-dark-theme
+    py-autopep8))
 
-(global-set-key (kbd "C-x C-b") 'ibuffer)
-(setq password-cache-expiry nil)
+(mapc #'(lambda (package)
+    (unless (package-installed-p package)
+      (package-install package)))
+      myPackages)
 
-;; Setup packages
-(require 'evil)
-(evil-mode 1)
-(require 'evil-org)
-(require 'evil-leader)
-(require 'magit)
-(global-set-key (kbd "C-c m") 'magit-status)
+;; BASIC CUSTOMIZATION
+;; --------------------------------------
 
-(require 'ido)
-(ido-mode 1)
-(setq ido-enable-flex-matching t)
-(setq ido-everywhere t)
+(setq inhibit-startup-message t) ;; hide the startup message
+(load-theme 'atom-dark t)
+;; (load-theme 'material t) ;; load material theme
+(global-linum-mode t) ;; enable line numbers globally
 
-(require 'epc)
-(smartparens-global-mode t)
-(require 'smartparens-config)
+;; Changes all lyes/no questions to y/n type
+(fset 'yes-or-no-p 'y-or-n-p)
 
-;; org-mode setup
-(require 'org)
-(define-key global-map "\C-cl" 'org-store-link)
-(define-key global-map "\C-ca" 'org-agenda)
-(setq org-log-done t)
+;; Markdown mode
+(autoload 'markdown-mode "markdown-mode"
+   "Major mode for editing Markdown files" t)
+(add-to-list 'auto-mode-alist '("\\.text\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 
-;;; setup yasnippet
-(require 'yasnippet)
-(setq yas-snippet-dirs
-      '("/home/mje/snippets"                 ;; personal snippets
-        "/home/mje/.emacs.d/yasnippet/yasmate/snippets" ;; the yasmate collection
-        "/home/mje/.emacs.d/yasnippet/snippets"         ;; the default collection
-        ))
-(yas-global-mode 1)
-;; setup for tab completion in term
-(add-hook 'term-mode-hook (lambda()
-        (setq yas-dont-activate t)))
+;; add m-files to octave-mode
+(add-to-list 'auto-mode-alist '("\\.m\\'" . octave-mode))
 
-; Elpy setup
-(elpy-enable)			   
-(elpy-use-ipython)
-;; Fixing a key binding bug in elpy
-;; Fixing another key binding bug in iedit mode
-(define-key global-map (kbd "C-c i") 'iedit-mode)
-(global-set-key [C-tab] 'company-complete)
-;; (add-hook 'after-init-hook 'global-company-mode)
-;; (add-to-list 'company-backends 'company-anaconda)
-;; (add-hook 'python-mode-hook 'anaconda-mode)
-;; (add-hook 'python-mode-hook 'eldoc-mode)
+;; for thunderbird emails
+(setq auto-mode-alist
+      (append '(("\.eml$" . text-mode))
+              auto-mode-alist))
 
-;; Tramp setup
-(setq tramp-default-method "ssh")
+;; Wrap lines
+(global-visual-line-mode 1)
+
+;; start server
+(if (not server-mode)
+    (server-start nil 1))
 
 ;; set shorcuts
 (global-set-key (kbd "<C-s-up>") 'shrink-window)
@@ -83,6 +74,67 @@
 (global-set-key (kbd "<C-s-right>") 'enlarge-window-horizontally)
 (global-set-key (kbd "<f5>") 'ispell)
 
+
+;; Org-mode settings
+;; --------------------------------------
+(add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+(global-set-key "\C-cl" 'org-store-link)
+(global-set-key "\C-ca" 'org-agenda)
+(global-font-lock-mode 1)
+
+;; Set aganda file(s)
+(setq org-agenda-files (list "~/Dropbox/ToDo/projects.org"
+                             "~/Dropbox/ToDo/todo.org"
+                             "~/Dropbox/ToDo/postdoc.org"))
+;; Set tags
+(setq org-tag-alist '(("@work" . ?k)
+                      ("@home" . ?h)
+                      ("IMPORTANT" . ?i)
+                      ("email" . ?e)
+                      ("phone" . ?p)
+                      ("write" . ?w)
+                      ("analysis" . ?a)))
+
+;; function to archive done tasks
+;; (defun my-org-archive-done-tasks ()
+;;   (interactive)
+;;   (org-map-entries 'org-archive-subtree "/DONE" '"~/Dropbox/ToDo/todo_archive.org")
+
+;; PYTHON CONFIGURATION
+;; --------------------------------------
+(defun set-exec-path-from-shell-PATH ()
+        (interactive)
+        (let ((path-from-shell (replace-regexp-in-string "^.*\n.*shell\n" "" (shell-command-to-string "$SHELL --login -i -c 'echo $PATH'"))))
+        (setenv "PATH" path-from-shell)
+        (setq exec-path (split-string path-from-shell path-separator))))
+ 
+(set-exec-path-from-shell-PATH)
+
+
+(elpy-enable)
+(elpy-use-ipython)
+;; enable autopep8 formatting on save
+(require 'py-autopep8)
+(add-hook 'elpy-mode-hook 'pyll-autopep8-enable-on-save)
+
+
+;; DIV PACKAGE SETUP
+;; --------------------------------------
+(require 'iedit)
+(define-key global-map (kbd "C-c i") 'iedit-mode)
+(global-set-key [C-tab] 'company-complete)
+
+;; (add-to-list 'load-path "~/.emacs.d/plugins/")
+;; (require 'evil-leader)
+;; (global-evil-leader-mode)
+;; (evil-leader/set-leader ",")
+;; (evil-leader/set-key
+;;   "e" 'find-file
+;;   "b" 'switch-to-buffer
+;;   "k" 'kill-buffer)
+
+(require 'evil)
+(evil-mode 1)
 ;; EVIL settings
 ;; Map jk to esc
 (define-key evil-insert-state-map "j" #'cofi/maybe-exit)
@@ -104,138 +156,75 @@
 
 (setf sentence-end-double-space nil)
 
-(evilnc-default-hotkeys) ; setup evil-nerd-commenter
+(evilnc-default-hotkeys)
 
-;; Setup python
-;; (add-hook 'python-mode-hook 'anaconda-mode)
-;; (autoload 'jedi:setup "jedi" nil t)
-;; (add-hook 'python-mode-hook 'jedi:setup)
-;; (setq jedi:setup-keys t)
-;; (eval-after-load "jedi"
-;;     '(setq jedi:server-command (list "/home/mje/Toolboxes/anaconda/bin/python" jedi:server-script)))
-
-;; enable flycheck
-(add-hook 'after-init-hook #'global-flycheck-mode)
-
-;; setup whitespace marker
-;; (require 'whitespace)
-;; (setq whitespace-style '(face empty tabs lines-tail trailing))
-;; (global-whitespace-mode t)
-;; (custom-set-faces
-;;  ;; custom-set-faces was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  '(my-long-line-face ((((class color)) (:background "gray10"))) t)
-;;  '(my-tab-face ((((class color)) (:background "grey10"))) t)
-;;  '(my-trailing-space-face ((((class color)) (:background "gray10"))) t))
-
-;; load theme
-;; (load-theme 'smyx t)
-(load-theme 'twilight t)
-
-;; Markdown mode
-(autoload 'markdown-mode "markdown-mode"
-   "Major mode for editing Markdown files" t)
-(add-to-list 'auto-mode-alist '("\\.text\\'" . markdown-mode))
-(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
-(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
-
-;; add m-files to octave-mode
-(add-to-list 'auto-mode-alist '("\\.m\\'" . octave-mode))
+;; use flycheck not flymake with elpy
+(when (require 'flycheck nil t)
+  (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+  (add-hook 'elpy-mode-hook 'flycheck-mode))
 
 
-;; setup thunderbird mode
-;; (setq load-path (append load-path '("~/.emacs.d/lisp/")))
-;; (require 'tbemail)
-(setq auto-mode-alist
-      (append '(("\.eml$" . text-mode))
-              auto-mode-alist))
+(require 'yasnippet)
+(setq yas-snippet-dirs
+      '("/home/mje/snippets"                 ;; personal snippets
+        ;; "/home/mje/.emacs.d/yasnippet/yasmate/snippets" ;; the yasmate collection
+        "/home/mje/.emacs.d/snippets"         ;; the default collection
+        ))
+(yas-global-mode 1)
+;; setup for tab completion in term
+(add-hook 'term-mode-hook (lambda()
+        (setq yas-dont-activate t)))
 
-;; Changes all yes/no questions to y/n type
-(fset 'yes-or-no-p 'y-or-n-p)
+(require 'magit)
+(global-set-key (kbd "C-c m") 'magit-status)
+(defun magit-expand-git-file-name (filename)
+  (unless (file-name-absolute-p filename)
+    (setq filename (expand-file-name filename)))
+  (if (and (eq system-type 'windows-nt) ; together with cygwin git, see #1318
+           (string-match "^/\\(cygdrive/\\)?\\([a-z]\\)/\\(.*\\)" filename))
+      (concat (match-string 2 filename) ":/"
+              (match-string 3 filename))
+    filename))
 
-;; setup neotree
-(require 'neotree)
-(global-set-key [f8] 'neotree-toggle)
-(add-hook 'neotree-mode-hook
-	(lambda ()
-	    (define-key evil-normal-state-local-map (kbd "TAB") 'neotree-enter)
-	    (define-key evil-normal-state-local-map (kbd "SPC") 'neotree-enter)
-	    (define-key evil-normal-state-local-map (kbd "q") 'neotree-hide)
-	    (define-key evil-normal-state-local-map (kbd "RET") 'neotree-enter)))
-
-;; projectile
-(require 'projectile)
-(projectile-global-mode)
 (setq projectile-enable-caching t)
 
-;; whitespace-mode
-(require 'whitespace)
-(setq whitespace-line-column 79) ;; limit line length
-(setq whitespace-style '(face lines-tail))
+;; window numbers
+(require 'window-number)
+(setq window-number-mode t)
 
-(add-hook 'prog-mode-hook 'whitespace-mode)
-(add-hook 'python-mode-hook 'whitespace-mode)
+;; ESS SETUP
+;; --------------------------------------
 
-; use pandocs as markdown tool
+;; start ess
+(require 'ess-site)
+(require 'ess-jags-d)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-safe-themes (quote ("4e262566c3d57706c70e403d440146a5440de056dfaeb3062f004da1711d83fc" "628278136f88aa1a151bb2d6c8a86bf2b7631fbea5f0f76cba2a0079cd910f7d" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "06f0b439b62164c6f8f84fdda32b62fb50b6d00e8b01c2208e55543a6337433a" "990920bac6d35106d59ded4c9fafe979fb91dc78c86e77d742237bc7da90d758" "a655f17225ad0a7190c79602593563191b7640ddebbb8c8fbd80c9d82faff1c6" "64581032564feda2b5f2cf389018b4b9906d98293d84d84142d90d7986032d33" "9dae95cdbed1505d45322ef8b5aa90ccb6cb59e0ff26fef0b8f411dfc416c552" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" "49eea2857afb24808915643b1b5bd093eefb35424c758f502e98a03d0d3df4b1" "30a8a5a9099e000f5d4dbfb2d6706e0a94d56620320ce1071eede5481f77d312" "09233dff5af535c4ba3ccabc4c9267bb7bf1131cccbfab5db65e96103c7aa023" "2b5aa66b7d5be41b18cc67f3286ae664134b95ccc4a86c9339c886dfd736132d" "7356632cebc6a11a87bc5fcffaa49bae528026a78637acd03cae57c091afd9b9" "a0feb1322de9e26a4d209d1cfa236deaf64662bb604fa513cca6a057ddf0ef64" "04dd0236a367865e591927a3810f178e8d33c372ad5bfef48b5ce90d4b476481" "7fbb8d064286706fb1e319c9d3c0a8eafc2efe6b19380aae9734c228b05350ae" "761d44dc06b3c8fff771435fd771b170d1bbdd71348b6aaaa6c0d0270d56cb70" "146d24de1bb61ddfa64062c29b5ff57065552a7c4019bee5d869e938782dfc2a" default)))
- '(elpy-rpc-backend "rope")
+ '(custom-safe-themes
+   (quote
+    ("a1289424bbc0e9f9877aa2c9a03c7dfd2835ea51d8781a0bf9e2415101f70a7e" "f8fceb5cce25882d0842aac0e75000bc1a06e3c4eac89b61103c6dbfa88e40ad" "3f78849e36a0a457ad71c1bda01001e3e197fe1837cb6eaa829eb37f0a4bdad5" "705f3f6154b4e8fac069849507fd8b660ece013b64a0a31846624ca18d6cf5e1" "5999e12c8070b9090a2a1bbcd02ec28906e150bb2cdce5ace4f965c76cf30476" "0c49a9e22e333f260126e4a48539a7ad6e8209ddda13c0310c8811094295b3a3" default)))
+ '(org-agenda-tags-column -105)
+ '(org-auto-align-tags t)
+ '(package-selected-packages
+   (quote
+    (atom-dark-theme jbeans-theme ujelly-theme atom-one-dark-theme tangotango-theme magit with-editor e monokai-theme py-autopep8 window-number twilight-theme smartparens projectile nlinum neotree molokai-theme markdown-mode flycheck evil-org evil-nerd-commenter evil-leader evil-iedit-state ess epc elpy ein better-defaults))))
+
  '(markdown-command "/usr/bin/pandoc")
- '(org-agenda-files (quote ("~/Dropbox/ToDo/idees.org")))
- '(python-shell-exec-path nil)
- '(python-shell-interpreter "/home/mje/Toolboxes/anaconda/bin/ipython")
- '(safe-local-variable-values (quote ((require-final-newline)))))
-
-
-;; start ess
-(require 'ess-site)
-
-;; LaTeX configuration
-;; (setq TeX-auto-save t)
-;; (setq TeX-parse-self t)
-;; (setq-default TeX-master nil)
-
-;; (add-hook 'LaTeX-mode-hook 'visual-line-mode)
-;; (add-hook 'LaTeX-mode-hook 'flyspell-mode)
-;; (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
-;; (add-hook 'LaTeX-mode-hook 'TeX-source-correlate-mode)
-
-;; (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-;; (setq reftex-plug-into-AUCTeX t)
-;; (setq TeX-PDF-mode t)
-
-;; (setq TeX-output-view-style
-;;     (quote
-;;      (("^pdf$" "." "evince -f %o")
-;;       ("^html?$" "." "iceweasel %o"))))
-
-;; ;; Setting up writegood-mode
-;; (require 'writegood-mode)
-;; (global-set-key "\C-cg" 'writegood-mode)
-
-;; start server
-(if (not server-mode)
-    (server-start nil t))
-
-
-
-;; (custom-set-faces
-;;  ;; custom-set-faces was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  )
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ '(default ((t (:family "DejaVu Sans Mono" :foundry "unknown" :slant normal :weight normal :height 90 :width normal)))))
 
-(provide 'init)
+
+;; Open files at startup
+(find-file "~/Dropbox/ToDo/todo.org") 
+(find-file "~/Dropbox/ToDo/projects.org") 
+;; '(*scratch* t)
+(switch-to-buffer "*scratch*")
+;; init.el ends here
